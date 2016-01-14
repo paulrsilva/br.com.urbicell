@@ -17,7 +17,26 @@ import java.sql.*;
  */
 public class Conexao {
     
-    public static boolean conectado;
+    public static boolean conectado; //para o caso de querer usar o valor conectado em outra classe
+    public static boolean ConexaoLocal; //para alternar entre BD local e externo
+    public static boolean Proxy;
+  
+    private ClassLoader classLoader;  //implementacao do classloader para o WebStart
+    Connection conn = null;
+    private String userName=null;
+    private String password=null;
+    private String url=null;    
+    
+    private Driver driver;
+    
+    private String SQL=null;
+    
+    //Talvez as variáveis abaixo sejam utilizadas no webstart
+    
+    String driverClassName = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
+    Class driverClass;
+    
+    //
     
     public void conecte(){
         
@@ -25,15 +44,15 @@ public class Conexao {
         Statement MeuState;
         
         try{
-            String url="jdbc:sqlserver://br.urbicell.com;databaseName=SmsServer";
-            String user="sa";
-            String pass="asfadas@2014";
-            Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-            Connection con=DriverManager.getConnection(url,user,pass);
+            url="jdbc:sqlserver://br.urbicell.com;databaseName=SmsServer";
+            userName="sa";
+            password="asfadas@2014";
+            Class.forName(driverClassName);
+            conn=DriverManager.getConnection(url,userName,password);
             System.out.println("Conectado com Sucesso");
             
-            MeuState = con.createStatement();
-            String SQL = "select ID, DirectionID, FromAddress, ToAddress, Body from Messages ORDER BY trace DESC";
+            MeuState = conn.createStatement();
+            SQL = "select ID, DirectionID, FromAddress, ToAddress, Body from Messages ORDER BY trace DESC";
             rs = MeuState.executeQuery(SQL);
             rs.next();
             for (int x=0; x<=10; x++) {
@@ -54,7 +73,19 @@ public class Conexao {
     }
 
    public void desconecte(){
-       conectado = false;
+       if (conn != null){
+           try {
+               conn.close();
+               System.out.println("conexao fechada");
+               conectado=false;
+           } catch (SQLException ex) {
+               ex.printStackTrace();
+               System.err.println("Deu pau: "+ex);
+           }
+       } else {
+           System.out.println("A conexao já estava fechada.");
+       }
+       this.conectado=false;
    }
     
     
